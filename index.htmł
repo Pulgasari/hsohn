@@ -20,7 +20,7 @@
     <each items="#pieces">
       <template>
         <card #="{{item.id}}">
-          <strong>{{item.title}}</strong>
+          <strong>xxx {{item.title}} xxx</strong>
           <pad #-pad>{{item.text}}</pad>
           <read #-read>{{item.read}}</read>
         </card>
