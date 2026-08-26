@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Custom HTML DSL Runtime</title>
+  <style>
+    .grid { display: flex; gap: 1rem; }
+    .card { border: 1px solid #ccc; padding: 1rem; }
+    .pad { background: #eee; padding: 0.5rem; margin: 0.5rem 0; }
+  </style>
+</head>
+<body>
+
+  <!-- Input source embedded as raw text template -->
+  <script type="text/custom-html" id="dsl-template">
+    <h2>the pieces</h2>
+    <grid>
+      <card #pinch>
+        <strong>pinchable</strong>
+        <pad #-pad>pinch me</pad>
+        <read #-read>scale 1.00</read>
+      </card>
+
+      <card #rotate>
+        <strong>rotatable</strong>
+        <pad #-pad>rotate me</pad>
+        <read #-read>0°</read>
+      </card>
+
+      <card #swipe>
+        <strong>swipeable</strong>
+        <pad #swipe-pad>swipe me</pad>
+        <read #swipe-read>—</read>
+      </card>
+    </grid>
+  </script>
+
+  <!-- Output target container -->
+  <main id="app"></main>
+
+  <script>
+    function renderDSL(templateId, targetSelector) {
+      const rawMarkup = document.getElementById(templateId).textContent;
+      
+      // Parse using text/html to tolerate standard HTML syntax and entities
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(rawMarkup, 'text/html');
+
+      const NATIVE_TAGS = new Set([
+        'a', 'b', 'body', 'button', 'div', 'em', 'footer', 'form', 'h1', 'h2', 'h3',
+        'h4', 'h5', 'h6', 'head', 'header', 'html', 'img', 'input', 'li', 'link',
+        'meta', 'nav', 'ol', 'p', 'script', 'section', 'span', 'strong', 'style', 'table', 'td', 'tr'
+      ]);
+
+      function processElement(element, currentScope = '') {
+        let activeScope = currentScope;
+
+        // Process short-form ID attributes
+        Array.from(element.attributes).forEach(attr => {
+          if (attr.name.startsWith('#-')) {
+            const subId = attr.name.slice(2);
+            element.setAttribute('id', currentScope ? `${currentScope}-${subId}` : subId);
+            element.removeAttribute(attr.name);
+          } else if (attr.name.startsWith('#')) {
+            activeScope = attr.name.slice(1);
+            element.setAttribute('id', activeScope);
+            element.removeAttribute(attr.name);
+          }
+        });
+
+        // Convert non-native custom tags to <div class="tagname">
+        const tagName = element.tagName.toLowerCase();
+        let targetNode = element;
+
+        if (!NATIVE_TAGS.has(tagName) && !tagName.includes('-') && tagName !== 'body' && tagName !== 'html') {
+          const div = doc.createElement('div');
+          const existingClass = element.getAttribute('class') || '';
+          div.className = existingClass ? `${tagName}${existingClass}` : tagName;
+
+          // Copy remaining attributes and children
+          Array.from(element.attributes).forEach(a => div.setAttribute(a.name, a.value));
+          while (element.firstChild) div.appendChild(element.firstChild);
+
+          element.replaceWith(div);
+          targetNode = div;
+        }
+
+        // Recursively walk through child nodes
+        Array.from(targetNode.children).forEach(child => processElement(child, activeScope));
+      }
+
+      // Transform all elements inside body
+      Array.from(doc.body.children).forEach(child => processElement(child));
+
+      // Inject rendered result into target container
+      document.querySelector(targetSelector).innerHTML = doc.body.innerHTML;
+    }
+
+    // Execute transformation
+    renderDSL('dsl-template', '#app');
+  </script>
+</body>
+</html>
