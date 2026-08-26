@@ -1,4 +1,4 @@
-// dsl.js - Self-executing DSL compiler for <head>
+// dsl.js - Native DOM compiler for <dsl> element
 (function () {
   const NATIVE_TAGS = new Set([
     'a', 'b', 'body', 'button', 'div', 'em', 'footer', 'form', 'h1', 'h2', 'h3',
@@ -20,18 +20,18 @@
     return path.split('.').reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : ''), obj);
   }
 
-  function resolveData(itemsAttr, doc) {
+  function resolveData(itemsAttr, scopeEl) {
     if (!itemsAttr) return [];
 
     // 1. Resolve from global window context
     const globalVar = getNestedValue(window, itemsAttr);
     if (globalVar !== undefined && globalVar !== '') return globalVar;
 
-    // 2. Resolve from <data> element (supports #id attribute or standard id)
+    // 2. Resolve from <data> element inside scope or document
     if (itemsAttr.startsWith('#')) {
       const idName = itemsAttr.slice(1);
-      const dataEl = doc.querySelector(itemsAttr) || 
-                     doc.querySelector(`[\\#${CSS.escape(idName)}]`) ||
+      const dataEl = scopeEl.querySelector(itemsAttr) || 
+                     scopeEl.querySelector(`[\\#${CSS.escape(idName)}]`) ||
                      document.querySelector(itemsAttr) ||
                      document.querySelector(`[\\#${CSS.escape(idName)}]`);
                      
@@ -42,12 +42,12 @@
     return parseJSON5(itemsAttr) || [];
   }
 
-  function processLoops(doc) {
-    const eachElements = Array.from(doc.querySelectorAll('each'));
+  function processLoops(container) {
+    const eachElements = Array.from(container.querySelectorAll('each'));
 
     eachElements.forEach(eachEl => {
       const itemsAttr = eachEl.getAttribute('items') || eachEl.getAttribute('from');
-      const data = resolveData(itemsAttr, doc);
+      const data = resolveData(itemsAttr, container);
       const templateEl = eachEl.querySelector('template');
 
       if (!templateEl || !Array.isArray(data)) {
@@ -56,22 +56,16 @@
       }
 
       const templateHTML = templateEl.innerHTML;
-      const fragment = doc.createDocumentFragment();
+      const fragment = document.createDocumentFragment();
 
       data.forEach((item, index) => {
-        const context = {
-          item,
-          index,
-          isFirst: index === 0,
-          isLast: index === data.length - 1
-        };
-
+        const context = { item, index, isFirst: index === 0, isLast: index === data.length - 1 };
         const renderedString = templateHTML.replace(/\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/g, (match, path) => {
           const val = getNestedValue(context, path);
           return val !== undefined ? val : '';
         });
 
-        const tempDiv = doc.createElement('div');
+        const tempDiv = document.createElement('div');
         tempDiv.innerHTML = renderedString;
 
         while (tempDiv.firstChild) {
@@ -82,11 +76,11 @@
       eachEl.replaceWith(fragment);
     });
 
-    // Remove <data> blocks so they do not remain in the final DOM
-    doc.querySelectorAll('data').forEach(el => el.remove());
+    // Remove raw data blocks
+    container.querySelectorAll('data').forEach(el => el.remove());
   }
 
-  function processElement(element, doc, currentScope = '') {
+  function processElement(element, currentScope = '') {
     let activeScope = currentScope;
 
     Array.from(element.attributes).forEach(attr => {
@@ -105,8 +99,8 @@
     const tagName = element.tagName.toLowerCase();
     let targetNode = element;
 
-    if (!NATIVE_TAGS.has(tagName) && !tagName.includes('-') && tagName !== 'body' && tagName !== 'html') {
-      const div = doc.createElement('div');
+    if (!NATIVE_TAGS.has(tagName) && !tagName.includes('-') && tagName !== 'body' && tagName !== 'html' && tagName !== 'dsl') {
+      const div = document.createElement('div');
       const existingClass = element.getAttribute('class') || '';
 
       div.className = existingClass ? `${tagName} ${existingClass}` : tagName;
@@ -118,37 +112,39 @@
       targetNode = div;
     }
 
-    Array.from(targetNode.children).forEach(child => processElement(child, doc, activeScope));
+    Array.from(targetNode.children).forEach(child => processElement(child, activeScope));
   }
 
-  function compileScriptTag(scriptEl) {
-    const rawMarkup = scriptEl.textContent;
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(rawMarkup, 'text/html');
-
-    // 1. Unroll loops & process <data> tags
-    processLoops(doc);
-
-    // 2. Transform custom tags and IDs
-    Array.from(doc.body.children).forEach(child => processElement(child, doc));
-
-    // 3. Render into DOM
-    const targetSelector = scriptEl.getAttribute('target');
-    const renderedHTML = doc.body.innerHTML;
-
-    if (targetSelector) {
-      const target = document.querySelector(targetSelector);
-      if (target) target.innerHTML = renderedHTML;
-    } else {
-      const template = document.createElement('template');
-      template.innerHTML = renderedHTML;
-      scriptEl.replaceWith(template.content);
+  function compileDslElement(dslEl) {
+    // 1. Sync document metadata from <dsl> attributes
+    if (dslEl.hasAttribute('title')) document.title = dslEl.getAttribute('title');
+    if (dslEl.hasAttribute('lang')) document.documentElement.lang = dslEl.getAttribute('lang');
+    if (dslEl.hasAttribute('charset')) {
+      let metaCharset = document.querySelector('meta[charset]');
+      if (!metaCharset) {
+        metaCharset = document.createElement('meta');
+        document.head.appendChild(metaCharset);
+      }
+      metaCharset.setAttribute('charset', dslEl.getAttribute('charset'));
     }
+
+    // 2. Expand loops & process templates
+    processLoops(dslEl);
+
+    // 3. Transform custom tags and IDs
+    Array.from(dslEl.children).forEach(child => processElement(child));
+
+    // 4. Unwrap: replace <dsl> tag with compiled children in DOM
+    const fragment = document.createDocumentFragment();
+    while (dslEl.firstChild) {
+      fragment.appendChild(dslEl.firstChild);
+    }
+    dslEl.replaceWith(fragment);
   }
 
-  // Auto-run when DOM is ready
+  // Execute compile when DOM ready
   document.addEventListener('DOMContentLoaded', () => {
-    const scripts = Array.from(document.querySelectorAll('script[type="text/custom-html"]'));
-    scripts.forEach(compileScriptTag);
+    const dslElements = Array.from(document.querySelectorAll('dsl'));
+    dslElements.forEach(compileDslElement);
   });
 })();
