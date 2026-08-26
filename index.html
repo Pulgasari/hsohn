@@ -1,18 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Custom HTML DSL Runtime</title>
-  <script src="./dsl.js" defer></script>
-  <style>
-    .grid { display: flex; gap: 1rem; }
-    .card { border: 1px solid #ccc; padding: 1rem; }
-    .pad { background: #eee; padding: 0.5rem; margin: 0.5rem 0; }
-  </style>
-</head>
-<body>
+<!DOCTYPE html><html><script src="./dsl.js" defer></script>
 
-  <script type="text/custom-html">
+<style>
+  .grid { display: flex; gap: 1rem; }
+  .card { border: 1px solid #ccc; padding: 1rem; }
+  .pad { background: #eee; padding: 0.5rem; margin: 0.5rem 0; }
+</style>
+
+  <dsl charset='UTF-8' lang='en' title='Custom HTML DSL Runtime'>
     
     <!-- Clean inline data block -->
     <data #pieces>
@@ -36,7 +30,6 @@
       </each>
     </grid>
 
-  </script>
+  </dsl>
 
-</body>
 </html>
