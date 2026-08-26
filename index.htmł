@@ -1,0 +1,35 @@
+<!DOCTYPE html><html>
+
+<style>
+  .grid { display: flex; gap: 1rem; }
+  .card { border: 1px solid #ccc; padding: 1rem; }
+  .pad { background: #eee; padding: 0.5rem; margin: 0.5rem 0; }
+</style>
+
+<dsl title='Custom HTML DSL Runtime'>
+  <data #pieces>
+    [
+      { id: 'pinch', title: 'pinchable', text: 'pinch me', read: 'scale 1.00' },
+      { id: 'rotate', title: 'rotatable', text: 'rotate me', read: '0°' },
+      { id: 'swipe', title: 'swipeable', text: 'swipe me', read: '—' }
+    ]
+  </data>
+
+  <h2>the pieces</h2>
+  <grid>
+    <each items="#pieces">
+      <template>
+        <card #="{{item.id}}">
+          <strong>{{item.title}}</strong>
+          <pad #-pad>{{item.text}}</pad>
+          <read #-read>{{item.read}}</read>
+        </card>
+      </template>
+    </each>
+  </grid>
+</dsl>
+
+<!-- Synchronous script directly after <dsl> blocks rendering until finished -->
+<script src="./dsl.js"></script>
+
+</html>
