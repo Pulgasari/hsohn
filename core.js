@@ -44,7 +44,7 @@ function parseCustomHTML(inputString) {
 }
 
 const $  = document.querySelector;
-const $$ = document.querySelectorAll;
+const $$ = [...document.querySelectorAll];
 
 export function compile (targetSelector = '#app') {
   const files = document.querySelectorAll('script[type="text/custom-html"]').map(processOne);
