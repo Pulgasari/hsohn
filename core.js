@@ -46,12 +46,12 @@ function parseCustomHTML(inputString) {
 
 
 export function compile (targetSelector = '#app') {
-  const files = document.querySelectorAll('').map(processOne);
+  const files = document.querySelectorAll('script[type="text/custom-html"]').map(processOne);
   files.forEach( file => document.querySelector(targetSelector).innerHTML = file;
 }
 
-    function renderDSL(templateId, targetSelector) {
-      const rawMarkup = document.getElementById(templateId).textContent;
+    function processOne (element) {
+      const rawMarkup = element.textContent;
       
       // Parse using text/html to tolerate standard HTML syntax and entities
       const parser = new DOMParser();
