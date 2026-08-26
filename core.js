@@ -43,7 +43,8 @@ function parseCustomHTML(inputString) {
   return doc.documentElement.innerHTML;
 }
 
-
+const $  = document.querySelector;
+const $$ = document.querySelectorAll;
 
 export function compile (targetSelector = '#app') {
   const files = document.querySelectorAll('script[type="text/custom-html"]').map(processOne);
@@ -51,7 +52,7 @@ export function compile (targetSelector = '#app') {
 }
 
 export function compile2 (targetSelector = '#app') {
-  document.querySelector(targetSelector).innerHTML = document.querySelectorAll('script[type="text/custom-html"]').map(processOne).join('');    
+  $(targetSelector).innerHTML = $$('script[type="text/custom-html"]').map(processOne).join('');    
 }
 
     function processOne (element) {
