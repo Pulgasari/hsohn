@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Custom HTML DSL Runtime with JSON5 & Loops</title>
+  <title>Custom HTML DSL Runtime</title>
+  <script src="./dsl.js" defer></script>
   <style>
     .grid { display: flex; gap: 1rem; }
     .card { border: 1px solid #ccc; padding: 1rem; }
@@ -11,21 +12,20 @@
 </head>
 <body>
 
-  <!-- JSON5 Data Source (supports unquoted keys, trailing commas, single quotes) -->
-  <script type="application/json5" id="pieces-data">
-    [
-      { id: 'pinch', title: 'pinchable', text: 'pinch me', read: 'scale 1.00' },
-      { id: 'rotate', title: 'rotatable', text: 'rotate me', read: '0°' },
-      { id: 'swipe', title: 'swipeable', text: 'swipe me', read: '—' },
-    ]
-  </script>
+  <script type="text/custom-html">
+    
+    <!-- Clean inline data block -->
+    <data #pieces>
+      [
+        { id: 'pinch', title: 'pinchable', text: 'pinch me', read: 'scale 1.00' },
+        { id: 'rotate', title: 'rotatable', text: 'rotate me', read: '0°' },
+        { id: 'swipe', title: 'swipeable', text: 'swipe me', read: '—' }
+      ]
+    </data>
 
-  <!-- Input Template -->
-  <script type="text/custom-html" id="dsl-template">
     <h2>the pieces</h2>
     <grid>
-      <!-- Loop over script tag ID -->
-      <each items="#pieces-data">
+      <each items="#pieces">
         <template>
           <card #="{{item.id}}">
             <strong>{{item.title}}</strong>
@@ -35,13 +35,8 @@
         </template>
       </each>
     </grid>
+
   </script>
 
-  <main id="app"></main>
-
-  <script type="module">
-    import { compile2 } from './core.js';
-    compile2('#app');
-  </script>
 </body>
 </html>
