@@ -50,6 +50,10 @@ export function compile (targetSelector = '#app') {
   files.forEach( file => document.querySelector(targetSelector).innerHTML = file );
 }
 
+export function compile2 (targetSelector = '#app') {
+  document.querySelector(targetSelector).innerHTML = document.querySelectorAll('script[type="text/custom-html"]').map(processOne).join('');    
+}
+
     function processOne (element) {
       const rawMarkup = element.textContent;
       
