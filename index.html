@@ -27,9 +27,9 @@
     h1 { color: var(--accent); border-bottom: 2px solid var(--border); padding-bottom: 0.5rem; }
     h2 { font-size: 1.2rem; color: var(--muted); margin-top: 0; }
 
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }
-    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; }
-    .pad { background: #0f172a80; border-radius: 8px; padding: 0.75rem; margin: 0.75rem 0; font-family: monospace; }
+    .grid  { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }
+    .card  { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; }
+    .pad   { background: #0f172a80; border-radius: 8px; padding: 0.75rem; margin: 0.75rem 0; font-family: monospace; }
     .badge { display: inline-block; background: #0369a1; color: #e0f2fe; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.8rem; font-weight: bold; }
 
     input[type="text"], select {
@@ -56,7 +56,7 @@
       transition: background 0.2s;
     }
 
-    button:hover { background: var(--accent-hover); }
+    button:hover    { background: var(--accent-hover); }
     button:disabled { opacity: 0.5; cursor: not-allowed; }
 
     .code-preview { background: #00000040; padding: 0.5rem; border-radius: 4px; font-size: 0.85rem; color: #a7f3d0; margin-bottom: 0.25rem; }
@@ -67,8 +67,8 @@
   <!-- hsohn Template DSL Source -->
   <script type="text/hsohn">
     <!-- 1. Custom Tag Definitions -->
-    <def tag="btn" is="button" />
-    <def tag="tag-badge" is="span" />
+    <def tag="btn"       is="button" />
+    <def tag="tag-badge" is="span"   />
 
     <h1>hsohn DSL Showcase</h1>
 
