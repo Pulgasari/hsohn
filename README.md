@@ -83,7 +83,7 @@ an undefined custom tag evaluates to a `<div>` with a className of that tagName.
 </div>
 ```
 
-## define custom-tags
+## define custom-tags by shorthand mapping
 
 ```html
 <tmpl tag='btn'  is='button' />
