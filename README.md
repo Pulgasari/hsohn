@@ -60,7 +60,7 @@
 
 # spec
 
-## 
+## undefined custom-tags
 
 ```xml
 <box>
@@ -78,7 +78,7 @@ an undefined custom tag evaluates to a `<div>` with a className of that tagName.
 </div>
 ```
 
-## define
+## define custom-tags
 
 ```html
 <def tag='btn'  is='button' />
@@ -92,6 +92,6 @@ an undefined custom tag evaluates to a `<div>` with a className of that tagName.
 <pic 'https://example.tld/sky.jpg' />
 ```
 
-## template
+## define custom-tags by template
 
 
