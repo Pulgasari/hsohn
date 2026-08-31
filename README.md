@@ -97,8 +97,8 @@ an undefined custom tag evaluates to a `<div>` with a className of that tagName.
 ```html
 <tmpl tag='track'>
   <div class='track'>
-    <img src='./{title}.jpg' />
-    <audio src='./{title}.mp3' />
+    <img src='./$title.jpg' />
+    <audio src='./$title.mp3' />
   </div>
 </tmpl>
 ```
