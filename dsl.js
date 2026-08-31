@@ -1,16 +1,17 @@
+// dsl.js - hsohn DSL Core Engine
 const hsohn = (function () {
   // English comments per user settings
   const NATIVE_TAGS = new Set([
     'a', 'b', 'body', 'button', 'div', 'em', 'footer', 'form', 'h1', 'h2', 'h3',
     'h4', 'h5', 'h6', 'head', 'header', 'html', 'img', 'input', 'li', 'link',
-    'meta', 'nav', 'ol', 'p', 'script', 'section', 'span', 'strong', 'style', 'table', 'td', 'tr'
+    'meta', 'nav', 'ol', 'p', 'script', 'section', 'span', 'strong', 'style', 'table', 'td', 'tr', 'label', 'select', 'option', 'code'
   ]);
 
   const customTagRegistry = new Map();
-  const bindings = []; // Reactive DOM bindings: { node, type, expr, scope }
+  const bindings = []; // Stores reactive DOM bindings
   let globalState = {};
 
-  // Create reactive proxy state
+  // Reactive Proxy Factory
   function createState(initialState = {}) {
     const handler = {
       get(target, prop, receiver) {
@@ -53,12 +54,16 @@ const hsohn = (function () {
 
   function updateBindings() {
     bindings.forEach(binding => {
-      const { node, type, expr, scope, attrName } = binding;
+      const { node, type, expr, scope, attrName, propName } = binding;
       const newValue = evalInScope(expr, scope);
 
       if (type === 'text') {
         if (node.textContent !== String(newValue)) {
           node.textContent = newValue !== undefined ? newValue : '';
+        }
+      } else if (type === 'property') {
+        if (node[propName] !== newValue) {
+          node[propName] = newValue;
         }
       } else if (type === 'attribute') {
         if (typeof newValue === 'boolean') {
@@ -67,6 +72,8 @@ const hsohn = (function () {
         } else {
           node.setAttribute(attrName, newValue);
         }
+      } else if (type === 'loop') {
+        renderLoop(binding);
       }
     });
   }
@@ -74,7 +81,7 @@ const hsohn = (function () {
   function preParse(rawCode) {
     if (!rawCode) return '';
 
-    // 1. Multi-attribute assignment: [id, name]="val" -> id="val" name="val"
+    // 1. Expand multi-attribute assignment: [id, name]="val"
     let clean = rawCode.replace(/\[\s*([a-zA-Z0-9_,\s-]+)\s*\]\s*=\s*(["'])(.*?)\2/g, (_, attrs, quote, val) => {
       return attrs.split(',').map(a => `${a.trim()}=${quote}${val}${quote}`).join(' ');
     });
@@ -100,6 +107,67 @@ const hsohn = (function () {
     });
   }
 
+  function renderLoop(binding) {
+    const { placeholder, templateEl, expr } = binding;
+    const data = evalInScope(expr) || [];
+    const parent = placeholder.parentNode;
+    if (!parent) return;
+
+    // Clear previous rendered loop items
+    if (binding.renderedNodes) {
+      binding.renderedNodes.forEach(n => n.remove());
+    }
+    binding.renderedNodes = [];
+
+    if (!Array.isArray(data)) return;
+
+    const fragment = document.createDocumentFragment();
+
+    data.forEach((item, index) => {
+      const context = { item, index, isFirst: index === 0, isLast: index === data.length - 1 };
+      const clone = templateEl.content.cloneNode(true);
+      const htmlContent = clone.firstElementChild ? clone.firstElementChild.outerHTML : '';
+      
+      const rendered = htmlContent.replace(/\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/g, (_, path) => {
+        return path === 'item' ? item : (path === 'index' ? index : evalInScope(path, context));
+      });
+
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = rendered;
+      while (tempDiv.firstChild) {
+        const child = tempDiv.firstChild;
+        binding.renderedNodes.push(child);
+        fragment.appendChild(child);
+      }
+    });
+
+    parent.insertBefore(fragment, placeholder);
+  }
+
+  function processLoops(container) {
+    container.querySelectorAll('each').forEach(eachEl => {
+      const itemsExpr = eachEl.getAttribute('items') || eachEl.getAttribute('from');
+      const templateEl = eachEl.querySelector('template');
+      if (!templateEl) {
+        eachEl.remove();
+        return;
+      }
+
+      const placeholder = document.createComment('loop-anchor');
+      eachEl.replaceWith(placeholder);
+
+      const loopBinding = {
+        type: 'loop',
+        placeholder,
+        templateEl,
+        expr: itemsExpr,
+        renderedNodes: []
+      };
+
+      bindings.push(loopBinding);
+    });
+  }
+
   function processElement(element, currentScope = '') {
     let activeScope = currentScope;
 
@@ -107,34 +175,57 @@ const hsohn = (function () {
       const name = attr.name;
       const value = attr.value;
 
-      // Match on:, on!:, once:, once!: with optional modifiers
-      const eventMatch = name.match(/^(on|once)(!?):([^|]+)(?:\|(.*))?$/);
+      // 1. Two-Way Data Binding (bind:value / bind:checked)
+      if (name.startsWith('bind:')) {
+        const prop = name.slice(5);
+        const stateKey = value.trim();
 
-      if (eventMatch) {
-        const [, prefix, exclamation, eventName, rawMods] = eventMatch;
-        const mods = rawMods ? rawMods.split('|') : [];
+        // State -> DOM
+        bindings.push({
+          node: element,
+          type: 'property',
+          propName: prop,
+          expr: stateKey
+        });
 
-        const isOnce = prefix === 'once' || mods.includes('once');
-        const shouldPreventDefault = exclamation === '!' || mods.includes('preventDefault');
+        // DOM -> State
+        const eventType = (element.type === 'checkbox' || element.type === 'radio' || element.tagName === 'SELECT') ? 'change' : 'input';
+        element.addEventListener(eventType, (e) => {
+          const newVal = (prop === 'checked') ? e.target.checked : e.target.value;
+          execInScope(`${stateKey} = $val`, { $val: newVal });
+        });
 
-        const eventHandler = function (e) {
-          if (mods.includes('enter') && e.key !== 'Enter') return;
-          if (mods.includes('escape') && e.key !== 'Escape') return;
-
-          if (shouldPreventDefault) e.preventDefault();
-          if (mods.includes('stopPropagation')) e.stopPropagation();
-
-          if (isOnce) {
-            element.removeEventListener(eventName, eventHandler);
-          }
-
-          execInScope(value, { $event: e });
-        };
-
-        element.addEventListener(eventName, eventHandler);
         element.removeAttribute(name);
       }
-      // Dynamic Attribute Binding (:disabled="cond")
+      // 2. Event Matcher: on:, on!:, once:, once!: with optional modifiers
+      else if (/^(on|once)(!?):/.test(name)) {
+        const eventMatch = name.match(/^(on|once)(!?):([^|]+)(?:\|(.*))?$/);
+        if (eventMatch) {
+          const [, prefix, exclamation, eventName, rawMods] = eventMatch;
+          const mods = rawMods ? rawMods.split('|') : [];
+
+          const isOnce = prefix === 'once' || mods.includes('once');
+          const shouldPreventDefault = exclamation === '!' || mods.includes('preventDefault');
+
+          const eventHandler = function (e) {
+            if (mods.includes('enter') && e.key !== 'Enter') return;
+            if (mods.includes('escape') && e.key !== 'Escape') return;
+
+            if (shouldPreventDefault) e.preventDefault();
+            if (mods.includes('stopPropagation')) e.stopPropagation();
+
+            if (isOnce) {
+              element.removeEventListener(eventName, eventHandler);
+            }
+
+            execInScope(value, { $event: e });
+          };
+
+          element.addEventListener(eventName, eventHandler);
+          element.removeAttribute(name);
+        }
+      }
+      // 3. Dynamic Attribute Binding (:disabled="cond")
       else if (name.startsWith(':')) {
         const realAttrName = name.slice(1);
         bindings.push({
@@ -145,7 +236,7 @@ const hsohn = (function () {
         });
         element.removeAttribute(name);
       }
-      // ID Scoping (# and #-)
+      // 4. ID Scoping (# and #-)
       else if (name.startsWith('#-')) {
         const subId = name.slice(2);
         element.setAttribute('id', currentScope ? `${currentScope}-${subId}` : subId);
@@ -157,7 +248,7 @@ const hsohn = (function () {
       }
     });
 
-    // Text Node Interpolation {{ expr }}
+    // Text Interpolation {{ expr }}
     Array.from(element.childNodes).forEach(node => {
       if (node.nodeType === Node.TEXT_NODE && node.textContent.includes('{{')) {
         const rawText = node.textContent;
@@ -185,7 +276,7 @@ const hsohn = (function () {
     const tagName = element.tagName.toLowerCase();
     let targetNode = element;
 
-    // Transform Custom Tags
+    // Custom Tag Transformation
     if (!NATIVE_TAGS.has(tagName) && !tagName.includes('-') && !['body', 'html', 'dsl'].includes(tagName)) {
       let targetTagName = 'div';
       let defaultClass = tagName;
@@ -220,6 +311,7 @@ const hsohn = (function () {
     container.innerHTML = preparsedHTML;
 
     processDefinitions(container);
+    processLoops(container);
     Array.from(container.children).forEach(child => processElement(child));
 
     const fragment = document.createDocumentFragment();
