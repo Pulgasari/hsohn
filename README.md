@@ -64,6 +64,8 @@
 - webcomponents as well
 - one could use custom-tags with or without explicitly defining them
 - if they weren't specified they simply become a div with a className of the custom-tag-name
+- shorthand `#id`
+- shorthand `.class1.class2`
 
 ## undefined custom-tags
 
