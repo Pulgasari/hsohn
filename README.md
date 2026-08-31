@@ -94,6 +94,8 @@ an undefined custom tag evaluates to a `<div>` with a className of that tagName.
 
 ## define custom-tags by template
 
+refer to an custom-tag-attribute with `$attr`.
+
 ```html
 <tmpl tag='track'>
   <div class='track'>
