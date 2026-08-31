@@ -1,17 +1,21 @@
-// dsl.js - Synchronous blocking compiler
 (function () {
+
+// document.body.style.display = 'none';
+  
+  // English comments per user settings
   const NATIVE_TAGS = new Set([
     'a', 'b', 'body', 'button', 'div', 'em', 'footer', 'form', 'h1', 'h2', 'h3',
     'h4', 'h5', 'h6', 'head', 'header', 'html', 'img', 'input', 'li', 'link',
     'meta', 'nav', 'ol', 'p', 'script', 'section', 'span', 'strong', 'style', 'table', 'td', 'tr'
   ]);
 
-  function parseJSON5(rawString) {
+  // Safely parse JSON strings without eval or new Function
+  function safeJSONParse(rawString) {
     if (!rawString) return null;
     try {
-      return (new Function(`return (${rawString});`))();
+      return JSON.parse(rawString);
     } catch (err) {
-      console.error('Failed to parse JSON5 data:', err);
+      console.warn('[hsohn] Fallback parsing failed for string:', rawString);
       return null;
     }
   }
@@ -20,46 +24,40 @@
     return path.split('.').reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : ''), obj);
   }
 
-  function resolveData(itemsAttr, scopeEl) {
-    if (!itemsAttr) return [];
-
-    if (itemsAttr.startsWith('#')) {
-      const idName = itemsAttr.slice(1);
-      const dataEl = scopeEl.querySelector(itemsAttr) || 
-                     scopeEl.querySelector(`[\\#${CSS.escape(idName)}]`);
-                     
-      if (dataEl) return parseJSON5(dataEl.textContent);
-    }
-
-    return parseJSON5(itemsAttr) || [];
-  }
-
   function processLoops(container) {
     const eachElements = Array.from(container.querySelectorAll('each'));
 
     eachElements.forEach(eachEl => {
       const itemsAttr = eachEl.getAttribute('items') || eachEl.getAttribute('from');
-      const data = resolveData(itemsAttr, container);
-      const templateEl = eachEl.querySelector('template');
+      let data = [];
 
+      if (itemsAttr && itemsAttr.startsWith('#')) {
+        const dataEl = container.querySelector(itemsAttr);
+        if (dataEl) data = safeJSONParse(dataEl.textContent) || [];
+      } else {
+        data = safeJSONParse(itemsAttr) || [];
+      }
+
+      const templateEl = eachEl.querySelector('template');
       if (!templateEl || !Array.isArray(data)) {
         eachEl.remove();
         return;
       }
 
-      const templateHTML = templateEl.innerHTML;
       const fragment = document.createDocumentFragment();
 
       data.forEach((item, index) => {
         const context = { item, index, isFirst: index === 0, isLast: index === data.length - 1 };
-        const renderedString = templateHTML.replace(/\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/g, (match, path) => {
-          const val = getNestedValue(context, path);
-          return val !== undefined ? val : '';
+        const clone = templateEl.content.cloneNode(true);
+        
+        // Traverse and bind scope data safely
+        const htmlContent = clone.firstElementChild ? clone.firstElementChild.outerHTML : '';
+        const rendered = htmlContent.replace(/\{\{\s*([a-zA-Z0-9_.]+)\s*\}\}/g, (_, path) => {
+          return getNestedValue(context, path);
         });
 
         const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = renderedString;
-
+        tempDiv.innerHTML = rendered;
         while (tempDiv.firstChild) {
           fragment.appendChild(tempDiv.firstChild);
         }
@@ -67,8 +65,6 @@
 
       eachEl.replaceWith(fragment);
     });
-
-    container.querySelectorAll('data').forEach(el => el.remove());
   }
 
   function processElement(element, currentScope = '') {
@@ -90,11 +86,11 @@
     const tagName = element.tagName.toLowerCase();
     let targetNode = element;
 
-    if (!NATIVE_TAGS.has(tagName) && !tagName.includes('-') && tagName !== 'body' && tagName !== 'html' && tagName !== 'dsl') {
+    if (!NATIVE_TAGS.has(tagName) && !tagName.includes('-') && !['body', 'html', 'dsl'].includes(tagName)) {
       const div = document.createElement('div');
       const existingClass = element.getAttribute('class') || '';
 
-      div.className = existingClass ? `${tagName} ${existingClass}` : tagName;
+      div.className = existingClass ? `${tagName}${existingClass}` : tagName;
 
       Array.from(element.attributes).forEach(a => div.setAttribute(a.name, a.value));
       while (element.firstChild) div.appendChild(element.firstChild);
@@ -107,8 +103,8 @@
   }
 
   function compileDslElement(dslEl) {
-    if (dslEl.hasAttribute('title')) document.title = dslEl.getAttribute('title');
-    if (dslEl.hasAttribute('lang')) document.documentElement.lang = dslEl.getAttribute('lang');
+    // Hide container to prevent layout flash during compilation
+    dslEl.style.display = 'none';
 
     processLoops(dslEl);
     Array.from(dslEl.children).forEach(child => processElement(child));
@@ -120,9 +116,8 @@
     dslEl.replaceWith(fragment);
   }
 
-  // Execute immediately on current DOM state
-  const dslEl = document.querySelector('dsl');
-  if (dslEl) {
-    compileDslElement(dslEl);
-  }
+  document.addEventListener('DOMContentLoaded', () => {
+    const dslEl = document.querySelector('dsl');
+    if (dslEl) compileDslElement(dslEl);
+  });
 })();
