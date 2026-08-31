@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>hsohn DSL - Complete Feature Showcase</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #f8fafc;
+      --accent: #38bdf8;
+      --accent-hover: #0284c7;
+      --muted: #94a3b8;
+      --border: #334155;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 2rem;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    h1 { color: var(--accent); border-bottom: 2px solid var(--border); padding-bottom: 0.5rem; }
+    h2 { font-size: 1.2rem; color: var(--muted); margin-top: 0; }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; }
+    .pad { background: #0f172a80; border-radius: 8px; padding: 0.75rem; margin: 0.75rem 0; font-family: monospace; }
+    .badge { display: inline-block; background: #0369a1; color: #e0f2fe; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.8rem; font-weight: bold; }
+
+    input[type="text"], select {
+      width: 100%;
+      padding: 0.5rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      box-sizing: border-box;
+      margin-bottom: 0.5rem;
+    }
+
+    button {
+      background: var(--accent);
+      color: #000;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-right: 0.5rem;
+      margin-top: 0.5rem;
+      transition: background 0.2s;
+    }
+
+    button:hover { background: var(--accent-hover); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .code-preview { background: #00000040; padding: 0.5rem; border-radius: 4px; font-size: 0.85rem; color: #a7f3d0; margin-bottom: 0.25rem; }
+  </style>
+</head>
+<body>
+
+  <!-- hsohn Template DSL Source -->
+  <script type="text/hsohn">
+    <!-- 1. Custom Tag Definitions -->
+    <def tag="btn" is="button" />
+    <def tag="tag-badge" is="span" />
+
+    <h1>hsohn DSL Showcase</h1>
+
+    <grid #app-grid>
+
+      <!-- CARD 1: ID Scoping (# / #-) & Multi-Attr -->
+      <card #profile>
+        <h2>1. Scoping (# / #-) & Multi-Attr</h2>
+        <p>Parent ID: <code>profile</code></p>
+        
+        <!-- Multi-attribute assignment: [id, name]="user-field" -->
+        <input type="text" [id, name]="user-field" bind:value="username" placeholder="Username..." />
+
+        <!-- Sub-IDs automatically resolve to #profile-avatar and #profile-role -->
+        <div class="pad" #-avatar>
+          Scoped ID: <strong>{{ username ? 'profile-avatar' : 'none' }}</strong>
+        </div>
+        
+        <!-- Self-closing custom tag -->
+        <tag-badge class="badge" #-role />
+      </card>
+
+      <!-- CARD 2: Two-Way Data Binding -->
+      <card #binding-demo>
+        <h2>2. Two-Way Binding (bind:)</h2>
+        
+        <label>
+          <input type="checkbox" bind:checked="isAdmin" />
+          Is Administrator
+        </label>
+
+        <select bind:value="role">
+          <option value="Developer">Developer</option>
+          <option value="Designer">Designer</option>
+          <option value="Product Owner">Product Owner</option>
+        </select>
+
+        <div class="pad">
+          User: <strong>{{ username }}</strong><br>
+          Role: <strong>{{ role }}</strong><br>
+          Admin Status: <strong>{{ isAdmin ? 'YES' : 'NO' }}</strong>
+        </div>
+      </card>
+
+      <!-- CARD 3: Events & Modifiers -->
+      <card #events-demo>
+        <h2>3. Event Handlers & Modifiers</h2>
+
+        <btn on:click="count++">Increment ({{ count }})</btn>
+
+        <form on!:submit="formSubmitted = true">
+          <input type="text" placeholder="Press Enter..." on:keydown|enter="lastKey = $event.key" />
+          <btn type="submit">Form Submit (No Reload)</btn>
+        </form>
+
+        <btn once:click="bonusClaimed = true" :disabled="bonusClaimed">
+          {{ bonusClaimed ? 'Claimed!' : 'Claim Bonus (Once)' }}
+        </btn>
+
+        <a href="https://example.com" once!:click="linkIntercepted = true">
+          {{ linkIntercepted ? 'Link intercepted once!' : 'Click Link (Intercepted once)' }}
+        </a>
+
+        <div class="pad">
+          Submitted: <strong>{{ formSubmitted }}</strong> | Last Key: <strong>{{ lastKey }}</strong>
+        </div>
+      </card>
+
+      <!-- CARD 4: Reactive Loops -->
+      <card #reactive-loops>
+        <h2>4. Reactive Loops</h2>
+
+        <btn on:click="addItem()">Add Item</btn>
+        <btn on:click="items = []" :disabled="items.length === 0">Clear All</btn>
+
+        <p>Total Items: {{ items.length }}</p>
+
+        <each items="items">
+          <template>
+            <div class="code-preview">
+              Item #{{ index + 1 }}: {{ item }}
+            </div>
+          </template>
+        </each>
+      </card>
+
+    </grid>
+  </script>
+
+  <!-- Load DSL Engine -->
+  <script src="dsl.js"></script>
+
+  <!-- Application Setup -->
+  <script>
+    // Initialize Reactive Application State
+    const state = hsohn.state({
+      username: 'Alex',
+      role: 'Developer',
+      isAdmin: true,
+      count: 0,
+      formSubmitted: false,
+      lastKey: 'None',
+      bonusClaimed: false,
+      linkIntercepted: false,
+      items: ['Initial Task A', 'Initial Task B'],
+      addItem() {
+        this.items.push(`Dynamic Task #${this.items.length + 1}`);
+      }
+    });
+  </script>
+</body>
+</html>
