@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>hsohn DSL - Modular Showcase</title>
+  <style>
+    :root { --bg: #0f172a; --card-bg: #1e293b; --text: #f8fafc; --accent: #38bdf8; --border: #334155; }
+    body { font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); padding: 2rem; max-width: 900px; margin: 0 auto; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; }
+    .pad { background: #0f172a80; border-radius: 8px; padding: 0.75rem; margin: 0.75rem 0; font-family: monospace; }
+    button { background: var(--accent); color: #000; border: none; padding: 0.5rem 1rem; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    input[type="text"] { width: 100%; padding: 0.5rem; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 6px; box-sizing: border-box; }
+  </style>
+</head>
+<body>
+
+  <script type="text/hsohn">
+    <def tag="btn" is="button" />
+
+    <grid #app>
+      <card #demo>
+        <h2>Modular hsohn Engine</h2>
+        <input type="text" [id, name]="username" bind:value="name" />
+        
+        <div class="pad">
+          Hello, <strong>{{ name }}</strong>!
+        </div>
+
+        <btn on:click="count++">Clicks: {{ count }}</btn>
+      </card>
+    </grid>
+  </script>
+
+  <!-- Load hsohn module -->
+  <script type="module">
+    import * as hsohn from './hsohn.js';
+
+    hsohn.state({
+      name: 'Developer',
+      count: 0
+    });
+  </script>
+</body>
+</html>
