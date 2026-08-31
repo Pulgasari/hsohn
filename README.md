@@ -58,7 +58,7 @@
 </grid>
 ```
 
-# spec
+# tmpl :: spec
 
 ## undefined custom-tags
 
@@ -81,9 +81,9 @@ an undefined custom tag evaluates to a `<div>` with a className of that tagName.
 ## define custom-tags
 
 ```html
-<def tag='btn'  is='button' />
-<def tag='href' is='a'      attr='href' />
-<def tag='pic'  is='image'  attr='src'  />
+<tmpl tag='btn'  is='button' />
+<tmpl tag='href' is='a'      attr='href' />
+<tmpl tag='pic'  is='image'  attr='src'  />
 ```
 
 ```xml
@@ -93,5 +93,19 @@ an undefined custom tag evaluates to a `<div>` with a className of that tagName.
 ```
 
 ## define custom-tags by template
+
+```html
+<tmpl tag='track'>
+  <div class='track'>
+    <img src='./{title}.jpg' />
+    <audio src='./{title}.mp3' />
+  </div>
+</tmpl>
+```
+
+```html
+<track title='example1' />
+<track title='example2' />
+```
 
 
