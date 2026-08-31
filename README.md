@@ -65,6 +65,6 @@
 ```
 
 ```xml
-<href:https://example.com />
+<href 'https://example.com' />
 ```
 
