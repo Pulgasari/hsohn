@@ -61,10 +61,12 @@
 ##
 
 ```html
-<def tag="href" is="a" shorthand="href" />
+<def tag='href' is='a'      shorthand='href'  />
+<def tag='btn'  is='button' shorthand='inner' />
 ```
 
 ```xml
 <href 'https://example.com' />
+<btn.primary 'click me!' on:click={alert('moin!')} />
 ```
 
