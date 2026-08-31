@@ -69,6 +69,7 @@
     <!-- 1. Custom Tag Definitions -->
     <def tag="btn"       is="button" />
     <def tag="tag-badge" is="span"   />
+    <def tag="href"      is="a"      shorthand="href" />
 
     <h1>hsohn DSL Showcase</h1>
 
@@ -106,11 +107,11 @@
           <option value="Product Owner">Product Owner</option>
         </select>
 
-        <div class="pad">
+        <pad>
           User: <strong>{{ username }}</strong><br>
           Role: <strong>{{ role }}</strong><br>
           Admin Status: <strong>{{ isAdmin ? 'YES' : 'NO' }}</strong>
-        </div>
+        </pad>
       </card>
 
       <!-- CARD 3: Events & Modifiers -->
@@ -131,6 +132,8 @@
         <a href="https://example.com" once!:click="linkIntercepted = true">
           {{ linkIntercepted ? 'Link intercepted once!' : 'Click Link (Intercepted once)' }}
         </a>
+
+        <href:https://example.com />
 
         <div class="pad">
           Submitted: <strong>{{ formSubmitted }}</strong> | Last Key: <strong>{{ lastKey }}</strong>
