@@ -58,7 +58,27 @@
 </grid>
 ```
 
-##
+# spec
+
+## 
+
+```xml
+<box>
+  <card>...</card>
+  <card>...</card>
+</box>
+```
+
+an undefined custom tag evaluates to a `<div>` with a className of that tagName.
+
+```xml
+<div class='box'>
+  <div class='card'>...</div>
+  <div class='card'>...</div>
+</div>
+```
+
+## define
 
 ```html
 <def tag='btn'  is='button' />
@@ -71,4 +91,7 @@
 <btn.primary 'click me!' on:click={alert('moin!')} />
 <pic 'https://example.tld/sky.jpg' />
 ```
+
+## template
+
 
