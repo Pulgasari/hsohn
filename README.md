@@ -61,9 +61,9 @@
 ##
 
 ```html
-<def tag='href' is='a'      shorthand='href'  />
-<def tag='btn'  is='button' shorthand='inner' />
-<def tag='pic'  is='image'  shorthand='src'   />
+<def tag='btn'  is='button' />
+<def tag='href' is='a'      attr='href' />
+<def tag='pic'  is='image'  attr='src'  />
 ```
 
 ```xml
