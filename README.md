@@ -63,10 +63,12 @@
 ```html
 <def tag='href' is='a'      shorthand='href'  />
 <def tag='btn'  is='button' shorthand='inner' />
+<def tag='pic'  is='image'  shorthand='src'   />
 ```
 
 ```xml
 <href 'https://example.com' />
 <btn.primary 'click me!' on:click={alert('moin!')} />
+<pic 'https://example.tld/sky.jpg' />
 ```
 
