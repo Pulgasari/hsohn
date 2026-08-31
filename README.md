@@ -60,6 +60,11 @@
 
 # tmpl :: spec
 
+- native html-tags work normally
+- webcomponents as well
+- one could use custom-tags with or without explicitly defining them
+- if they weren't specified they simply become a div with a className of the custom-tag-name
+
 ## undefined custom-tags
 
 ```xml
@@ -110,7 +115,7 @@ refer to an custom-tag-attribute with `$attr`.
 <track title='example2' />
 ```
 
-or use even `$attr':
+or use even `$attr`:
 
 ```html
 <tmpl tag='track'>
