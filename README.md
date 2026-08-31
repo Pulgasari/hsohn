@@ -58,3 +58,13 @@
 </grid>
 ```
 
+##
+
+```html
+<def tag="href" is="a" shorthand="href" />
+```
+
+```xml
+<href:https://example.com />
+```
+
