@@ -110,4 +110,20 @@ refer to an custom-tag-attribute with `$attr`.
 <track title='example2' />
 ```
 
+or use even `$attr':
+
+```html
+<tmpl tag='track'>
+  <div class='track'>
+    <img src='./$attr.jpg' />
+    <audio src='./$attr.mp3' />
+  </div>
+</tmpl>
+```
+
+```html
+<track 'example1' />
+<track 'example2' />
+```
+
 
